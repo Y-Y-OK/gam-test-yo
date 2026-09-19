@@ -298,7 +298,9 @@ STANDARD_HOURS = 40 * 52
 kor_excess = kor - STANDARD_HOURS
 kor_series = sorted((int(r["year"]), float(r["working_hours_omm"]))
                      for r in wh if r["code"] == "KOR")
-first_under_year = next(y for y, v in kor_series if v < STANDARD_HOURS)
+kor_by_year = dict(kor_series)
+y30 = latest_year - 30
+drop_rate = (kor_by_year[y30] - kor) / kor_by_year[y30] * 100
 
 longest_country, longest_hours = max(cur.items(), key=lambda kv: kv[1])
 
@@ -307,8 +309,10 @@ topic(
     "법정기준(연 2,080시간) 대비 나라별 초과근로 추정",
     "Our World in Data", "https://ourworldindata.org/grapher/annual-working-hours-per-worker",
     [
-        slider("w1", f"{latest_year}년 전 세계({n_countries}개국) 평균 노동시간은?",
-               world_avg, "시간", 1500, 2300, 50,
+        choice("w1", f"{latest_year}년 전 세계({n_countries}개국) 평균 노동시간은?",
+               ["1,600시간 미만", "1,600~1,800시간", "1,800~2,000시간",
+                "2,000~2,200시간", "2,200시간 이상"],
+               "1,800~2,000시간",
                f"{latest_year}년 {n_countries}개국 평균 {world_avg:,.0f}시간 "
                f"(한국 {kor:,.0f}시간)",
                "한국이 유난히 길다는 인상과 달리, 세계 평균 자체가 이미 꽤 높습니다."),
@@ -325,13 +329,13 @@ topic(
                "차이일 뿐, 실측 야근시간이 아닙니다)",
                "'한국은 야근이 심하다'는 인상과 달리, 평균으로 보면 이미 법정기준 "
                "아래로 내려가 있습니다."),
-        slider("w3", "한국의 연간 노동시간이 법정기준(2,080시간) 아래로 "
-                     "처음 내려간 해는 언제였을까요?",
-               first_under_year, "년", 1995, 2023, 1,
-               f"{first_under_year}년에 처음 2,080시간 아래로 내려감 "
-               f"(그전 {first_under_year-1}년은 기준 초과)",
-               "'요즘도 야근이 심하다'는 체감과 달리, 이미 여러 해 전부터 "
-               "평균 기준으로는 법정선 아래입니다."),
+        choice("w3", f"지난 30년({y30}~{latest_year})간 한국의 노동시간은 "
+                     "몇 % 줄었을까요?",
+               ["약 10%", "약 30%", "약 50%"], "약 30%",
+               f"{y30}년 {kor_by_year[y30]:,.0f}시간 → {latest_year}년 "
+               f"{kor:,.0f}시간 (감소율 {drop_rate:.1f}%)",
+               "줄어든 폭은 대개 과소평가됩니다. 30년 사이 3분의 1 가까이 "
+               "줄었습니다."),
         choice("w4", "대륙 중 평균 노동시간이 가장 긴 곳은?",
                [region_name_ko[k] for k in region_avg],
                region_name_ko[longest_region],
