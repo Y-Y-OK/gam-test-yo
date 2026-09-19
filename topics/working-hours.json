@@ -1,8 +1,8 @@
 {
   "id": "working-hours",
   "emoji": "⏰",
-  "title": "우리는 얼마나 일하나",
-  "blurb": "나라별 1인당 연간 노동시간",
+  "title": "야근, 아직도 그렇게 심한가",
+  "blurb": "법정기준(연 2,080시간) 대비 나라별 초과근로 추정",
   "source": "Our World in Data",
   "source_url": "https://ourworldindata.org/grapher/annual-working-hours-per-worker",
   "caveat": "이 자료에는 개발도상국이 많이 포함돼 있어, OECD 안에서의 순위와 전체 순위가 다릅니다. '법정기준 초과분'은 실제 야근시간이 아니라 연간 총노동시간과 주40시간 기준의 산술적 차이일 뿐입니다 — 휴가·파트타임 비중이 나라마다 달라 이 하나의 숫자로 다 설명되지 않습니다.",

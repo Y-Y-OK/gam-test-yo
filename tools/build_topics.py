@@ -304,8 +304,8 @@ years_since_under = latest_year - first_under_year
 longest_country, longest_hours = max(cur.items(), key=lambda kv: kv[1])
 
 topic(
-    "working-hours", "⏰", "우리는 얼마나 일하나",
-    "나라별 1인당 연간 노동시간",
+    "working-hours", "⏰", "야근, 아직도 그렇게 심한가",
+    "법정기준(연 2,080시간) 대비 나라별 초과근로 추정",
     "Our World in Data", "https://ourworldindata.org/grapher/annual-working-hours-per-worker",
     [
         slider("w1", f"{latest_year}년 전 세계({n_countries}개국) 평균 노동시간은?",

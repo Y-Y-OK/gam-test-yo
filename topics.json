@@ -76,8 +76,8 @@
     {
       "id": "working-hours",
       "emoji": "⏰",
-      "title": "우리는 얼마나 일하나",
-      "blurb": "나라별 1인당 연간 노동시간",
+      "title": "야근, 아직도 그렇게 심한가",
+      "blurb": "법정기준(연 2,080시간) 대비 나라별 초과근로 추정",
       "source": "Our World in Data"
     },
     {
