@@ -299,7 +299,6 @@ kor_excess = kor - STANDARD_HOURS
 kor_series = sorted((int(r["year"]), float(r["working_hours_omm"]))
                      for r in wh if r["code"] == "KOR")
 first_under_year = next(y for y, v in kor_series if v < STANDARD_HOURS)
-years_since_under = latest_year - first_under_year
 
 longest_country, longest_hours = max(cur.items(), key=lambda kv: kv[1])
 
@@ -326,12 +325,13 @@ topic(
                "차이일 뿐, 실측 야근시간이 아닙니다)",
                "'한국은 야근이 심하다'는 인상과 달리, 평균으로 보면 이미 법정기준 "
                "아래로 내려가 있습니다."),
-        slider("w3", f"한국이 법정기준(연 2,080시간) 아래로 내려간 건 "
-                     f"{latest_year}년 기준 몇 년 전일까요?",
-               years_since_under, "년 전", 0, 20, 1,
+        slider("w3", "한국의 연간 노동시간이 법정기준(2,080시간) 아래로 "
+                     "처음 내려간 해는 언제였을까요?",
+               first_under_year, "년", 1995, 2023, 1,
                f"{first_under_year}년에 처음 2,080시간 아래로 내려감 "
-               f"({latest_year}-{first_under_year}={years_since_under}년 전)",
-               "'요즘도 야근이 심하다'는 체감과 달리, 평균 기준으로는 꽤 됐습니다."),
+               f"(그전 {first_under_year-1}년은 기준 초과)",
+               "'요즘도 야근이 심하다'는 체감과 달리, 이미 여러 해 전부터 "
+               "평균 기준으로는 법정선 아래입니다."),
         choice("w4", "대륙 중 평균 노동시간이 가장 긴 곳은?",
                [region_name_ko[k] for k in region_avg],
                region_name_ko[longest_region],
