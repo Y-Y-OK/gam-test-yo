@@ -278,49 +278,74 @@ wh = [r for r in load_csv("working_hours.csv") if r["working_hours_omm"]]
 latest_year = max(int(r["year"]) for r in wh if r["code"] == "KOR")
 cur = owid_countries(wh, latest_year, "working_hours_omm")
 kor = cur["South Korea"]
-rank = sorted(cur.items(), key=lambda kv: -kv[1])
-kor_rank = [k for k, _ in rank].index("South Korea") + 1
-longer = kor_rank - 1
-past = {int(r["year"]): float(r["working_hours_omm"])
-        for r in wh if r["code"] == "KOR"}
-y30 = latest_year - 30
-drop = past[y30] - kor
-trio = {c: cur[c] for c in ("South Korea", "Japan", "Germany") if c in cur}
-shortest = min(trio, key=trio.get)
-name_ko = {"South Korea": "한국", "Japan": "일본", "Germany": "독일"}
+n_countries = len(cur)
+world_avg = mean(cur.values())
+
+region_vals: dict[str, list[float]] = {}
+for r in wh:
+    if int(r["year"]) == latest_year and r["code"] and not r["code"].startswith("OWID"):
+        region_vals.setdefault(r["owid_region"], []).append(float(r["working_hours_omm"]))
+region_avg = {k: mean(v) for k, v in region_vals.items()}
+longest_region = max(region_avg, key=region_avg.get)
+region_name_ko = {"Asia": "아시아", "Africa": "아프리카", "Europe": "유럽",
+                   "North America": "북아메리카", "South America": "남아메리카",
+                   "Oceania": "오세아니아"}
+
+# 법정 기준(주 40시간 x 52주)을 초과한 시간 — **실측 야근이 아니라 추정치**다.
+# 유급·무급 초과근무, 휴가 사용률, 파트타임 비중이 이 평균 하나에 섞여 있어서
+# '야근시간'이라 부르면 과장이다. 그래서 문항에도 '추정'을 박아 둔다.
+STANDARD_HOURS = 40 * 52
+kor_excess = kor - STANDARD_HOURS
+kor_series = sorted((int(r["year"]), float(r["working_hours_omm"]))
+                     for r in wh if r["code"] == "KOR")
+first_under_year = next(y for y, v in kor_series if v < STANDARD_HOURS)
+years_since_under = latest_year - first_under_year
+
+longest_country, longest_hours = max(cur.items(), key=lambda kv: kv[1])
 
 topic(
     "working-hours", "⏰", "우리는 얼마나 일하나",
     "나라별 1인당 연간 노동시간",
     "Our World in Data", "https://ourworldindata.org/grapher/annual-working-hours-per-worker",
     [
-        slider("w1", f"{latest_year}년 한국의 1인당 연간 노동시간은?",
-               kor, "시간", 1200, 2600, 50,
-               f"{latest_year}년 한국 {kor:,.0f}시간 "
-               f"(주 5일 기준 하루 약 {kor / 250:.1f}시간)",
-               "연 단위로 물으면 감이 잘 안 옵니다. 하루로 나눠 보면 체감과 "
-               "맞는지 확인할 수 있습니다."),
-        slider("w2", f"한국보다 더 오래 일하는 나라는 {len(cur)}개국 중 몇 개일까요?",
-               longer, "개국", 0, 60, 1,
-               f"{latest_year}년 기준 {len(cur)}개국 중 한국은 {kor_rank}위",
-               "'한국이 제일 많이 일한다'는 인상이 강하지만, 비교 대상에 따라 "
-               "순위가 달라집니다."),
-        slider("w3", f"한국의 노동시간은 30년 전({y30}년)보다 몇 시간 줄었을까요?",
-               drop, "시간", 0, 900, 50,
-               f"{y30}년 {past[y30]:,.0f}시간 → {latest_year}년 {kor:,.0f}시간",
-               "줄어든 폭은 대개 과소평가됩니다. 하루로 치면 크게 달라진 값입니다."),
-        choice("w4", "한국·일본·독일 중 가장 적게 일하는 나라는?",
-               ["한국", "일본", "독일"], name_ko[shortest],
-               " · ".join(f"{name_ko[c]} {trio[c]:,.0f}시간" for c in trio),
-               "나라마다 통계 기준이 다릅니다. 순위보다 격차의 크기를 봅니다."),
-        slider("w5", "한국과 독일의 연간 노동시간 차이는?",
-               abs(cur["South Korea"] - cur["Germany"]), "시간", 0, 900, 50,
-               f"한국 {cur['South Korea']:,.0f} · 독일 "
-               f"{cur['Germany']:,.0f}시간",
-               "두 나라 차이를 주 단위로 나눠 보면 체감이 확 달라집니다."),
+        slider("w1", f"{latest_year}년 전 세계({n_countries}개국) 평균 노동시간은?",
+               world_avg, "시간", 1500, 2300, 50,
+               f"{latest_year}년 {n_countries}개국 평균 {world_avg:,.0f}시간 "
+               f"(한국 {kor:,.0f}시간)",
+               "한국이 유난히 길다는 인상과 달리, 세계 평균 자체가 이미 꽤 높습니다."),
+        slider("w2", "한국의 노동시간은 법정기준(주 40시간=연 2,080시간)보다 "
+                     "많을까요, 적을까요? (많으면 +, 적으면 -로 답하세요)",
+               kor_excess, "시간", -400, 400, 20,
+               f"{latest_year}년 한국 {kor:,.0f}시간 - 법정기준 {STANDARD_HOURS:,}시간 "
+               f"= {kor_excess:+,.0f}시간 (※ 통계상 평균 총노동시간과 법정기준의 "
+               "차이일 뿐, 실측 야근시간이 아닙니다)",
+               "'한국은 야근이 심하다'는 인상과 달리, 평균으로 보면 이미 법정기준 "
+               "아래로 내려가 있습니다."),
+        slider("w3", f"한국이 법정기준(연 2,080시간) 아래로 내려간 건 "
+                     f"{latest_year}년 기준 몇 년 전일까요?",
+               years_since_under, "년 전", 0, 20, 1,
+               f"{first_under_year}년에 처음 2,080시간 아래로 내려감 "
+               f"({latest_year}-{first_under_year}={years_since_under}년 전)",
+               "'요즘도 야근이 심하다'는 체감과 달리, 평균 기준으로는 꽤 됐습니다."),
+        choice("w4", "대륙 중 평균 노동시간이 가장 긴 곳은?",
+               [region_name_ko[k] for k in region_avg],
+               region_name_ko[longest_region],
+               " · ".join(f"{region_name_ko[k]} {v:,.0f}시간"
+                          for k, v in sorted(region_avg.items(), key=lambda kv: -kv[1])),
+               "'선진국일수록 적게 일한다'는 인상을 대륙 단위로 보면, 한국이 속한 "
+               "대륙이 가장 오래 일하는 쪽입니다."),
+        slider("w5", f"{latest_year}년 세계에서 가장 오래 일하는 나라와 "
+                     "한국의 노동시간 차이는?",
+               longest_hours - kor, "시간", 0, 1000, 50,
+               f"{longest_country} {longest_hours:,.0f}시간 - 한국 {kor:,.0f}시간 "
+               f"= {longest_hours-kor:,.0f}시간",
+               "'한국이 제일 많이 일한다'는 인상이 강하지만, 세계에는 그보다 "
+               "훨씬 긴 나라들이 있습니다."),
     ],
     caveat="이 자료에는 개발도상국이 많이 포함돼 있어, OECD 안에서의 순위와 "
-           "전체 순위가 다릅니다. '어느 집단과 비교하느냐'가 순위를 만듭니다.")
+           "전체 순위가 다릅니다. '법정기준 초과분'은 실제 야근시간이 아니라 "
+           "연간 총노동시간과 주40시간 기준의 산술적 차이일 뿐입니다 — 휴가·"
+           "파트타임 비중이 나라마다 달라 이 하나의 숫자로 다 설명되지 않습니다.")
 
 # ── 5. 인구와 출산 ───────────────────────────────────────────────
 fert = [r for r in load_json("wb_fertility.json")[1] if r["value"] is not None]
